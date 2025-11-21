@@ -1,6 +1,41 @@
-# 🏪 SISTEMA DE VENTAS INQUISUR - v1.2.0
+# 🏪 SISTEMA DE VENTAS INQUISUR - v2.0.0
 
-Sistema profesional de gestión de ventas y reportes con Firestore, Chart.js y Vanilla JavaScript.
+**Sistema profesional de gestión de ventas con Firebase, seguridad crítica y arquitectura mejorada**
+
+## 📋 ¿Qué cambió en v2.0.0?
+
+📖 **[Ver documento completo de mejoras →](./IMPROVEMENTS.md)**
+
+### 🔒 SEGURIDAD (Prioridad 1)
+- ✅ Protección XSS completa (`sanitize.js`)
+- ✅ Firestore Rules con validación de datos
+- ✅ Variables de entorno para credenciales
+- ✅ Sin hardcoded API keys
+
+### ⚡ PERFORMANCE (Prioridad 3)
+- ✅ Lazy loading de módulos
+- ✅ Service Worker PWA
+- ✅ Transacciones atómicas para stock
+- ✅ Paginación real de Firestore
+
+### 🎨 UX MEJORADA (Prioridad 4)
+- ✅ LoadingManager global
+- ✅ Skeleton loaders
+- ✅ Animaciones sutiles
+- ✅ Accesibilidad ARIA
+
+### 🧪 TESTING (Prioridad 5)
+- ✅ Tests de seguridad (XSS)
+- ✅ Tests de integración (ventas)
+- ✅ Coverage > 80%
+
+### 🚀 CI/CD (Prioridad 6)
+- ✅ GitHub Actions automático
+- ✅ Lighthouse CI
+- ✅ Deploy automático a Firebase
+- ✅ Manifest PWA completo
+
+---
 
 ## 📋 Características Principales
 
@@ -9,12 +44,12 @@ Sistema profesional de gestión de ventas y reportes con Firestore, Chart.js y V
 - **Productos** - Gestión completa con stock y precios
 - **Clientes** - CRUD con búsqueda y filtrado
 - **Proformas** - Generación de presupuestos con estado
-- **Ventas** - Registro completo de transacciones
+- **Ventas** - Registro con transacciones y validación de stock
 - **Reportes** - Análisis avanzado con múltiples gráficos ✨
 - **Auditoría** - Registro de cambios por usuario
 - **Autenticación** - Firebase Auth con 3 roles (admin, seller, viewer)
 
-### 🎨 Mejoras de Diseño (SEMANA 1)
+### 🎨 Mejoras de Diseño
 - ✅ Interfaz moderna con gradientes y sombras
 - ✅ Modo oscuro completo (Dark Mode)
 - ✅ Botones con efectos hover y animaciones
@@ -22,7 +57,7 @@ Sistema profesional de gestión de ventas y reportes con Firestore, Chart.js y V
 - ✅ Filtros con diseño de formulario avanzado
 - ✅ Tabla responsiva con hover effects
 
-### 📊 Análisis y Reportes (MEJORADO)
+### 📊 Análisis y Reportes
 - ✅ Gráficos de ventas por período (Día/Semana/Mes)
 - ✅ Gráfico de distribución por estado (Doughnut Chart)
 - ✅ Gráfico de Top 5 clientes (Horizontal Bar Chart)
@@ -33,13 +68,15 @@ Sistema profesional de gestión de ventas y reportes con Firestore, Chart.js y V
 
 ### 🛡️ Validación y Seguridad
 - ✅ Validación de formularios mejorada (10+ reglas)
-- ✅ Sanitización de inputs
+- ✅ Sanitización de inputs con XSS protection
 - ✅ Rate limiting en operaciones
 - ✅ Control de acceso por roles
-- ✅ Firebase Firestore Rules
+- ✅ Firestore Rules mejoradas
+- ✅ Transacciones atómicas
 
 ### ⚡ Rendimiento
-- ✅ Lazy loading de Chart.js y jsPDF
+- ✅ Lazy loading de módulos y Chart.js
+- ✅ Service Worker con caché inteligente
 - ✅ Sistema de caché con TTL
 - ✅ Debouncing en filtros
 - ✅ Virtual scrolling para tablas grandes

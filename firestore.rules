@@ -30,53 +30,144 @@ service cloud.firestore {
     }
     
     // ========================================
+    // FUNCIONES DE VALIDACIÓN DE DATOS
+    // ========================================
+    
+    function isValidString(value, minLen, maxLen) {
+      return value is string && 
+             value.size() >= minLen && 
+             value.size() <= maxLen;
+    }
+    
+    function isValidNumber(value, min, max) {
+      return value is number && 
+             value >= min && 
+             value <= max;
+    }
+    
+    function isValidEmail(email) {
+      return email is string && 
+             email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    function isValidArray(arr, minItems, maxItems) {
+      return arr is list && 
+             arr.size() >= minItems && 
+             arr.size() <= maxItems;
+    }
+    
+    // ========================================
     // REGLAS DE COLECCIONES
     // ========================================
     
     // PRODUCTOS: Admin full access, Seller y Viewer solo lectura
     match /productos/{productId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() && 
+        request.resource.data.codigo is string && 
+        request.resource.data.codigo.size() > 0 &&
+        request.resource.data.nombre is string && 
+        request.resource.data.nombre.size() > 0 &&
+        request.resource.data.precio is number &&
+        request.resource.data.precio > 0 &&
+        request.resource.data.stock is number &&
+        request.resource.data.stock >= 0;
+      allow update: if isAdmin() && 
+        // Validar datos
+        (request.resource.data.precio is number && request.resource.data.precio > 0) &&
+        (request.resource.data.stock is number && request.resource.data.stock >= 0) &&
+        // Immutable fields
+        request.resource.data.codigo == resource.data.codigo &&
+        request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
     }
     
     // CLIENTES: Admin y Seller pueden crear/editar, Solo Admin puede eliminar
     match /clientes/{clientId} {
       allow read: if isAuthenticated();
-      allow create, update: if hasAnyRole(['admin', 'seller']);
+      allow create: if hasAnyRole(['admin', 'seller']) && 
+        isValidString(request.resource.data.nombre, 2, 200) &&
+        (request.resource.data.email == null || isValidEmail(request.resource.data.email)) &&
+        isValidString(request.resource.data.ruc, 1, 20);
+      allow update: if hasAnyRole(['admin', 'seller']) && 
+        isValidString(request.resource.data.nombre, 2, 200) &&
+        (request.resource.data.email == null || isValidEmail(request.resource.data.email)) &&
+        // RUC es inmutable
+        request.resource.data.ruc == resource.data.ruc &&
+        request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isAdmin();
     }
     
     // PROFORMAS: Admin y Seller pueden gestionar, Viewer solo lectura
     match /proformas/{proformaId} {
       allow read: if isAuthenticated();
-      allow create, update: if hasAnyRole(['admin', 'seller']);
+      allow create: if hasAnyRole(['admin', 'seller']) && 
+        isValidString(request.resource.data.numero, 1, 50) &&
+        isValidNumber(request.resource.data.total, 0.01, 999999999) &&
+        isValidArray(request.resource.data.items, 1, 100) &&
+        request.resource.data.estado in ['borrador', 'enviada', 'confirmada'];
+      allow update: if hasAnyRole(['admin', 'seller']) && 
+        isValidNumber(request.resource.data.total, 0.01, 999999999) &&
+        // Total y numero son inmutables
+        request.resource.data.total == resource.data.total &&
+        request.resource.data.numero == resource.data.numero;
       allow delete: if isAdmin();
     }
     
     // VENTAS: Admin y Seller pueden crear/editar, Solo Admin puede eliminar
     match /ventas/{ventaId} {
       allow read: if isAuthenticated();
-      allow create, update: if hasAnyRole(['admin', 'seller']);
+      allow create: if hasAnyRole(['admin', 'seller']) && 
+        isValidString(request.resource.data.numero, 1, 50) &&
+        isValidNumber(request.resource.data.total, 0.01, 999999999) &&
+        isValidArray(request.resource.data.items, 1, 100) &&
+        request.resource.data.items.size() <= 100 &&
+        request.resource.data.estado in ['confirmada', 'pagada', 'cancelada'] &&
+        request.resource.data.base is number &&
+        request.resource.data.base > 0 &&
+        request.resource.data.igv is number &&
+        request.resource.data.igv >= 0;
+      allow update: if hasAnyRole(['admin', 'seller']) && 
+        // Total y numero son inmutables - protegen integridad
+        request.resource.data.total == resource.data.total &&
+        request.resource.data.numero == resource.data.numero &&
+        request.resource.data.items == resource.data.items;
       allow delete: if isAdmin();
     }
     
     // AUDITORÍA: Solo lectura para Admin, escritura automática del sistema
     match /audit/{auditId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated(); // Permite log de auditoría
+      allow create: if isAuthenticated() && 
+        request.resource.data.accion is string &&
+        request.resource.data.usuario is string &&
+        request.resource.data.timestamp is timestamp;
       allow update, delete: if false; // Inmutable
     }
     
     // USUARIOS: Solo Admin puede gestionar, usuarios pueden ver su propio perfil
     match /usuarios/{userId} {
       allow read: if isAuthenticated() && (isAdmin() || isOwner(userId));
-      allow create, update, delete: if isAdmin();
+      allow create: if isAdmin() && 
+        isValidEmail(request.resource.data.email) &&
+        request.resource.data.role in ['admin', 'seller', 'viewer'];
+      allow update: if isAdmin() && 
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
     }
     
     // COUNTERS: Solo lectura general, escritura para admin/seller (códigos autogenerados)
     match /counters/{counterId} {
       allow read: if isAuthenticated();
-      allow write: if hasAnyRole(['admin', 'seller']);
+      allow create: if hasAnyRole(['admin', 'seller']) && 
+        request.resource.data.seq is number &&
+        request.resource.data.seq >= 0;
+      allow update: if hasAnyRole(['admin', 'seller']) && 
+        request.resource.data.seq is number &&
+        request.resource.data.seq >= resource.data.seq; // Solo incrementar
+      allow delete: if false; // Los contadores nunca se eliminan
     }
   }
 }

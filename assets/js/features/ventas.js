@@ -1,12 +1,13 @@
 // assets/js/features/ventas.js — Ventas desde proformas + correlativo + stock + PDF
-import { db } from "../firebase.js";
+import { db, auth } from "../firebase.js";
 import { PageTemplate } from "../ui/components.js";
 import { logAudit } from "../utils/audit.js";
 import { toastSuccess, toastError, toastInfo, toastWarning } from "../utils/alerts.js";
 import { SCHEMAS } from "../rules/schemas.js";
+import { escapeHtml } from "../utils/sanitize.js";
 import {
   collection, getDocs, getDoc, doc, query, orderBy, limit, where,
-  addDoc, updateDoc, serverTimestamp, setDoc, increment
+  addDoc, updateDoc, serverTimestamp, setDoc, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const IGV_RATE = 0.18;
@@ -173,7 +174,6 @@ export async function VentasPage(container) {
       if (!items.length) return toastWarning("⚠️ Carga una proforma primero");
       try {
         const { base, igv, total } = calcTotales(items);
-        const numero = await nextVentaNumber(db);
 
         const itemsSanitized = items.map(i => ({
           codigo: String(i.codigo || "").trim(),
@@ -184,7 +184,7 @@ export async function VentasPage(container) {
         }));
 
         const payload = {
-          numero, items: itemsSanitized, base, igv, total,
+          items: itemsSanitized, base, igv, total,
           igvIncluido: IGV_INCLUIDO, igvRate: IGV_RATE,
           proformaId: proformaId || null,
           createdBy: auth.currentUser?.uid || null,
@@ -194,38 +194,115 @@ export async function VentasPage(container) {
         const errors = SCHEMAS.venta.validar(payload);
         if (errors.length > 0) return toastError("❌ " + errors.join(", "));
 
-        const ref = await addDoc(collection(db, "ventas"), payload);
-        await logAudit({ action: "venta.create", entity: "ventas", entityId: ref.id, payload: { numero: payload.numero, total: payload.total } });
-
-        for (const it of items) {
-          const codigo = it?.codigo || "";
-          if (!codigo) continue;
-          const qRef = query(collection(db, "productos"), where("codigo", "==", codigo), limit(1));
-          const snap = await getDocs(qRef);
-          if (!snap.empty) {
-            const d = snap.docs[0];
-            const curr = Number(d.data()?.stock || 0);
-            const nuevo = Math.max(0, curr - Number(it.cant || 0));
-            try {
-              await updateDoc(doc(db, "productos", d.id), { stock: nuevo });
-              await logAudit({ action: "producto.stock-reduction", entity: "productos", entityId: d.id, payload: { codigo, anterior: curr, nuevo, cantidad: it.cant } });
-            } catch {}
+        // ========================================
+        // TRANSACCIÓN COMPLETA CON VALIDACIÓN DE STOCK
+        // ========================================
+        const result = await runTransaction(db, async (transaction) => {
+          // 1️⃣ VALIDAR STOCK DE TODOS LOS ITEMS PRIMERO
+          const productoIds = new Map(); // Guardar refs para actualizar después
+          
+          for (const item of itemsSanitized) {
+            if (!item.codigo) continue;
+            
+            const qRef = query(collection(db, "productos"), where("codigo", "==", item.codigo), limit(1));
+            const snap = await getDocs(qRef);
+            
+            if (snap.empty) {
+              throw new Error(`❌ Producto con código ${item.codigo} no encontrado`);
+            }
+            
+            const prodDoc = snap.docs[0];
+            const prodData = prodDoc.data();
+            const stockActual = Number(prodData?.stock || 0);
+            
+            if (stockActual < item.cant) {
+              throw new Error(
+                `❌ Stock insuficiente para ${item.nombre}.\n` +
+                `Disponible: ${stockActual}, Solicitado: ${item.cant}`
+              );
+            }
+            
+            // Guardar para actualizar después
+            productoIds.set(item.codigo, { id: prodDoc.id, actual: stockActual, cant: item.cant });
           }
+          
+          // 2️⃣ SI TODO OK, GENERAR NÚMERO Y CREAR VENTA
+          const cRef = doc(db, "counters", "ventas");
+          const counterDoc = await transaction.get(cRef);
+          let newSeq = 1;
+          if (counterDoc.exists()) {
+            newSeq = (counterDoc.data()?.seq || 0) + 1;
+          }
+          const numero = `V-${String(newSeq).padStart(6, "0")}`;
+          
+          // Actualizar contador
+          transaction.set(cRef, {
+            seq: newSeq,
+            updatedAt: serverTimestamp(),
+            lastNumber: numero,
+          }, { merge: true });
+          
+          // Crear venta
+          const ventaRef = doc(collection(db, "ventas"));
+          transaction.set(ventaRef, {
+            ...payload,
+            numero
+          });
+          
+          // 3️⃣ REDUCIR STOCK DE TODOS LOS PRODUCTOS
+          for (const [codigo, info] of productoIds.entries()) {
+            const prodRef = doc(db, "productos", info.id);
+            const nuevoStock = info.actual - info.cant;
+            transaction.update(prodRef, {
+              stock: nuevoStock,
+              updatedAt: serverTimestamp()
+            });
+          }
+          
+          // 4️⃣ MARCAR PROFORMA COMO CERRADA (si aplica)
+          if (proformaId) {
+            const proformaRef = doc(db, "proformas", proformaId);
+            transaction.update(proformaRef, {
+              estado: "cerrada",
+              cerradaEn: serverTimestamp(),
+              ventaId: ventaRef.id
+            });
+          }
+          
+          return {
+            id: ventaRef.id,
+            numero,
+            base,
+            igv,
+            total,
+            items: itemsSanitized
+          };
+        });
+
+        // 5️⃣ REGISTRAR AUDITORÍA (fuera de transacción)
+        try {
+          await logAudit({
+            action: "venta.create",
+            entity: "ventas",
+            entityId: result.id,
+            payload: {
+              numero: result.numero,
+              total: result.total,
+              items: result.items.length,
+              stockReductions: Array.from(productoIds.keys()).join(", ")
+            }
+          });
+        } catch (auditError) {
+          console.warn("⚠️ Error en auditoría, pero venta se guardó:", auditError);
         }
 
-        if (proformaId) {
-          try {
-            await updateDoc(doc(db, "proformas", proformaId), { estado: "cerrada", cerradaEn: serverTimestamp() });
-            await logAudit({ action: "proforma.close", entity: "proformas", entityId: proformaId, payload: { ventaId: ref.id, numero: payload.numero } });
-          } catch {}
-        }
-
+        // 6️⃣ GENERAR PDF
         await ensureJsPDF();
         const { jsPDF } = window.jspdf;
         const docpdf = new jsPDF({ unit: "pt", format: "a4" });
         let y = 40;
         docpdf.setFontSize(14);
-        docpdf.text(`Venta ${payload.numero}`, 40, y);
+        docpdf.text(`Venta ${result.numero}`, 40, y);
         y += 20;
         docpdf.setFontSize(10);
         docpdf.text(`Fecha: ${new Date().toLocaleString("es-PE")}`, 40, y);
@@ -238,9 +315,9 @@ export async function VentasPage(container) {
         y += 8;
         docpdf.line(40, y, 555, y);
         y += 14;
-        items.forEach(it => {
-          docpdf.text(String(it.codigo || ""), 40, y);
-          docpdf.text(String(it.nombre || "").slice(0, 40), 100, y);
+        itemsSanitized.forEach(it => {
+          docpdf.text(escapeHtml(String(it.codigo || "")), 40, y);
+          docpdf.text(escapeHtml(String(it.nombre || "").slice(0, 40)), 100, y);
           docpdf.text(String(it.cant || 0), 350, y, { align: "right" });
           docpdf.text(money(it.precio || 0), 430, y, { align: "right" });
           docpdf.text(money(it.subtotal || 0), 520, y, { align: "right" });
@@ -250,17 +327,17 @@ export async function VentasPage(container) {
         docpdf.line(360, y, 555, y);
         y += 16;
         docpdf.text("Base:", 430, y, { align: "right" });
-        docpdf.text(money(payload.base), 520, y, { align: "right" });
+        docpdf.text(money(result.base), 520, y, { align: "right" });
         y += 14;
         docpdf.text("IGV:", 430, y, { align: "right" });
-        docpdf.text(money(payload.igv), 520, y, { align: "right" });
+        docpdf.text(money(result.igv), 520, y, { align: "right" });
         y += 14;
         docpdf.setFontSize(12);
         docpdf.text("Total:", 430, y, { align: "right" });
-        docpdf.text(money(payload.total), 520, y, { align: "right" });
+        docpdf.text(money(result.total), 520, y, { align: "right" });
 
-        ultimoPDF = { doc: docpdf, nombre: `Venta_${numero}.pdf` };
-        toastSuccess("✅ Venta guardada: " + numero);
+        ultimoPDF = { doc: docpdf, nombre: `Venta_${result.numero}.pdf` };
+        toastSuccess("✅ Venta guardada: " + result.numero);
 
         items = [];
         selProforma.value = "";

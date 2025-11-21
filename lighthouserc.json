@@ -1,0 +1,38 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3000",
+        "http://localhost:3000/login.html"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--no-sandbox --disable-gpu"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "cumululative-layout-shift": [
+          "error",
+          { "maxNumericValue": 0.1 }
+        ],
+        "first-contentful-paint": [
+          "error",
+          { "maxNumericValue": 2500 }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          { "maxNumericValue": 3500 }
+        ],
+        "time-to-interactive": [
+          "error",
+          { "maxNumericValue": 5000 }
+        ]
+      }
+    }
+  }
+}
