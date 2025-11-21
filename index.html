@@ -3,25 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Sistema de Ventas INQUISUR - Control y gestión de ventas">
+  <meta name="theme-color" content="#4f46e5">
   <title>Sistema de Ventas INQUISUR</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="data:,">
+  
+  <!-- CSS de accesibilidad y utilidades -->
+  <link rel="stylesheet" href="assets/css/accessibility.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  
   <script>
     // Aplicar tema antes de renderizar (prevenir flash)
     const theme = localStorage.getItem("sistema-ventas-theme") || "light";
     if (theme === "dark") document.documentElement.classList.add("dark");
   </script>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
     }
   </script>
+  
   <!-- SweetAlert2 para alertas modernas -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Animaciones -->
+  
+  <!-- Animaciones externas -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  
   <script>
     // Suprimir warnings de WebSocket (Live Server dev only)
     const originalWarn = console.warn;
@@ -39,32 +50,44 @@
   </script>
 </head>
 <body class="p-4 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors">
+  <!-- Skip to main content - accesibilidad -->
+  <a href="#app" class="skip-to-main">Ir al contenido principal</a>
+  
   <header class="bg-gradient-to-r from-indigo-600 to-blue-600 dark:from-indigo-800 dark:to-blue-800 shadow-lg mb-4 rounded-lg">
     <div class="flex justify-between items-center p-4 max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center shadow">
-          <span class="text-2xl font-bold text-indigo-600">📦</span>
+          <span class="text-2xl font-bold text-indigo-600" aria-hidden="true">📦</span>
         </div>
         <div>
           <h1 class="text-2xl font-bold text-white">SISTEMA DE VENTAS</h1>
           <p class="text-indigo-100 dark:text-indigo-300 text-sm">INQUISUR - Control de Ventas</p>
         </div>
       </div>
-      <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow">Salir</button>
+      <button 
+        id="logoutBtn" 
+        class="bg-red-500 hover:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition shadow" 
+        aria-label="Cerrar sesión"
+        title="Cerrar sesión actual">Salir</button>
     </div>
-    <nav id="navbar" class="bg-indigo-700/50 dark:bg-indigo-900/50 px-4 py-2 flex gap-4 text-sm font-medium text-white overflow-x-auto max-w-7xl mx-auto rounded-b-lg"></nav>
+    <nav id="navbar" 
+      class="bg-indigo-700/50 dark:bg-indigo-900/50 px-4 py-2 flex gap-4 text-sm font-medium text-white overflow-x-auto max-w-7xl mx-auto rounded-b-lg"
+      role="navigation"
+      aria-label="Navegación principal"></nav>
   </header>
   
-  <main id="app" class="max-w-7xl mx-auto">Cargando…</main>
+  <main id="app" class="max-w-7xl mx-auto" role="main" aria-label="Contenido principal">
+    <div role="status" aria-live="polite" aria-label="Cargando aplicación">Cargando…</div>
+  </main>
 
   <script type="module" src="assets/js/app.js"></script>
   <script>
-    // Registrar Service Worker (deshabilitado temporalmente)
-    // if ("serviceWorker" in navigator) {
-    //   navigator.serviceWorker.register("service-worker.js").catch(err => {
-    //     console.warn("SW no registrado:", err);
-    //   });
-    // }
+    // Registrar Service Worker para PWA
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js").catch(err => {
+        console.warn("Service Worker no registrado:", err);
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,0 +1,219 @@
+/* Animaciones personalizadas para el sistema de ventas v2.0.0 */
+
+/* Animaciones de entrada/salida para toasts y notificaciones */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+}
+
+/* Animaciones de pulso para skeleton loaders */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Clases utilitarias */
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-in;
+}
+
+.animate-fadeInLeft {
+  animation: fadeInLeft 0.4s ease-out;
+}
+
+.animate-fadeOutRight {
+  animation: fadeOutRight 0.4s ease-in;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Shimmer efecto para skeleton loaders mejorado */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Transiciones suaves */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading bar */
+.loading-bar {
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #10b981,
+    #f59e0b,
+    #ef4444,
+    #3b82f6
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1s infinite;
+}
+
+/* Pulse para elementos activos */
+.pulse-effect {
+  position: relative;
+}
+
+.pulse-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: inherit;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Expandir/Contraer suavemente */
+@keyframes expandWidth {
+  from {
+    max-width: 0;
+    opacity: 0;
+  }
+  to {
+    max-width: 500px;
+    opacity: 1;
+  }
+}
+
+@keyframes collapseWidth {
+  from {
+    max-width: 500px;
+    opacity: 1;
+  }
+  to {
+    max-width: 0;
+    opacity: 0;
+  }
+}
+
+.animate-expandWidth {
+  animation: expandWidth 0.3s ease-out;
+}
+
+.animate-collapseWidth {
+  animation: collapseWidth 0.3s ease-in;
+}
+
+/* Rotación suave para loaders */
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-smooth {
+  animation: spin-smooth 0.8s linear infinite;
+}
+
+/* Bounce para elementos interactivos */
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1s cubic-bezier(0.36, 0, 0.66, 1) infinite;
+}
+
+/* Dark mode support para animaciones */
+@media (prefers-color-scheme: dark) {
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(30, 41, 59, 0) 0,
+      rgba(30, 41, 59, 0.3) 20%,
+      rgba(30, 41, 59, 0.6) 60%,
+      rgba(30, 41, 59, 0)
+    );
+  }
+}
+
+/* Reduce motion para accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
