@@ -1,0 +1,52 @@
+# ========================================
+# ARCHIVOS SENSIBLES - NUNCA COMMITEAR
+# ========================================
+
+# Firebase Service Account (CRÍTICO)
+*-firebase-adminsdk-*.json
+davidnuevo-42c5a-firebase-adminsdk-fbsvc-171a94f6f9.json
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+.env.development
+
+# ========================================
+# DEPENDENCIAS
+# ========================================
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ========================================
+# BUILD Y DIST
+# ========================================
+dist/
+build/
+.cache/
+*.log
+
+# ========================================
+# IDE Y EDITORES
+# ========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ========================================
+# TESTING
+# ========================================
+coverage/
+.nyc_output/
+
+# ========================================
+# TEMPORAL
+# ========================================
+tmp/
+temp/
+*.tmp

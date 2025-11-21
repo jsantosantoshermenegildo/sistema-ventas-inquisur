@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Iniciar Sesión - Sistema de Ventas</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SweetAlert2 para alertas modernas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Animaciones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <script>
+    // Aplicar tema antes de renderizar (prevenir flash)
+    const theme = localStorage.getItem("sistema-ventas-theme") || "light";
+    if (theme === "dark") document.documentElement.classList.add("dark");
+    // Suprimir warnings de WebSocket (Live Server dev only)
+    const originalWarn = console.warn;
+    const originalError = console.error;
+    console.warn = function(...args) {
+      const msg = String(args[0] || "");
+      if (msg.includes("wss://") || msg.includes("WebSocket") || msg.includes("Tailwind")) return;
+      originalWarn.apply(console, args);
+    };
+    console.error = function(...args) {
+      const msg = String(args[0] || "");
+      if (msg.includes("wss://") || msg.includes("WebSocket")) return;
+      originalError.apply(console, args);
+    };
+    // Configuración de Tailwind para modo oscuro
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-900 dark:to-blue-900 min-h-screen flex items-center justify-center p-4 transition-colors">
+  <div class="bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-8 w-full max-w-md">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 dark:from-indigo-800 dark:to-blue-800 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <span class="text-4xl">📦</span>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800 dark:text-white">SISTEMA DE VENTAS</h1>
+      <p class="text-indigo-600 dark:text-indigo-400 font-semibold mt-1">INQUISUR</p>
+      <p class="text-gray-500 dark:text-slate-400 mt-3">Ingresa tus credenciales</p>
+    </div>
+
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Correo Electrónico</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="correo@ejemplo.com"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          required
+          class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-700 transition"
+      >
+        Entrar
+      </button>
+    </form>
+
+    <div class="mt-4 text-center">
+      <button
+        id="forgotBtn"
+        type="button"
+        class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+      >
+        ¿Olvidaste tu contraseña?
+      </button>
+    </div>
+
+    <div id="message" class="mt-4 p-3 rounded-lg hidden dark:text-white"></div>
+  </div>
+
+  <script type="module" src="assets/js/login.js"></script>
+</body>
+</html>
