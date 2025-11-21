@@ -35,7 +35,7 @@ class MockFirestore {
   // Simula updateProducto
   updateProducto(id, data) {
     const producto = this.collections.productos.get(id);
-    if (!producto) throw new Error('Producto no encontrado');
+    if (!producto) {throw new Error('Producto no encontrado');}
     const updated = { ...producto, ...data };
     this.collections.productos.set(id, updated);
     return updated;

@@ -37,7 +37,7 @@ const USER_MESSAGES = {
  * Clasificar error por tipo
  */
 function classifyError(error) {
-  if (!error) return ERROR_TYPES.UNKNOWN;
+  if (!error) {return ERROR_TYPES.UNKNOWN;}
 
   const message = error.message?.toLowerCase() || "";
   const code = error.code || "";

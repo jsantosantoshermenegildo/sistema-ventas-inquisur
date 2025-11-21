@@ -8,7 +8,7 @@
  * @returns {Object} { items, currentPage, totalPages, total, hasNextPage, hasPrevPage }
  */
 export function paginate(items, page = 1, pageSize = 50) {
-  if (!Array.isArray(items)) items = [];
+  if (!Array.isArray(items)) {items = [];}
 
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -41,7 +41,7 @@ export function paginate(items, page = 1, pageSize = 50) {
 export function renderPaginationControls(pagination, containerId = "pagination") {
   const { currentPage, totalPages, total, pageSize, startIndex, endIndex } = pagination;
 
-  if (totalPages <= 1) return ""; // No mostrar si cabe en 1 página
+  if (totalPages <= 1) {return "";} // No mostrar si cabe en 1 página
 
   const btnPrev = pagination.hasPrevPage
     ? `<button class="pagination-btn px-3 py-1 border rounded" data-page="${currentPage - 1}">← Anterior</button>`
@@ -74,7 +74,7 @@ export function renderPaginationControls(pagination, containerId = "pagination")
  */
 export function setupPaginationEvents(onPageChange, containerId = "pagination") {
   const container = document.getElementById(containerId);
-  if (!container) return;
+  if (!container) {return;}
 
   container.addEventListener("click", (e) => {
     if (e.target.classList.contains("pagination-btn") && !e.target.disabled) {
@@ -91,7 +91,7 @@ export function setupPaginationEvents(onPageChange, containerId = "pagination") 
  * Permite ir a una página específica
  */
 export function renderPageJumper(currentPage, totalPages) {
-  if (totalPages <= 1) return "";
+  if (totalPages <= 1) {return "";}
 
   return `
     <div class="mt-2 flex gap-2 items-center">
@@ -109,7 +109,7 @@ export function renderPageJumper(currentPage, totalPages) {
  */
 export function setupPageJumper(onJump, totalPages) {
   const jumper = document.getElementById("pageJumper");
-  if (!jumper) return;
+  if (!jumper) {return;}
 
   jumper.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {

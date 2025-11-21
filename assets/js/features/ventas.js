@@ -5,6 +5,7 @@ import { logAudit } from "../utils/audit.js";
 import { toastSuccess, toastError, toastInfo, toastWarning } from "../utils/alerts.js";
 import { SCHEMAS } from "../rules/schemas.js";
 import { escapeHtml } from "../utils/sanitize.js";
+import { eventBus, EVENTS } from "../utils/eventBus.js";
 import {
   collection, getDocs, getDoc, doc, query, orderBy, limit, where,
   addDoc, updateDoc, serverTimestamp, setDoc, increment, runTransaction
@@ -17,7 +18,7 @@ const money = n => (Number(n)||0).toLocaleString("es-PE",{style:"currency",curre
 const toNum  = v => typeof v === "number" ? v : Number(String(v||"").replace(/[^\d.,-]/g,"").replace(",","."));
 
 async function ensureJsPDF() {
-  if (window.jspdf?.jsPDF) return;
+  if (window.jspdf?.jsPDF) {return;}
   await new Promise((res, rej) => {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
@@ -112,7 +113,7 @@ export async function VentasPage(container) {
   const btnCargar = container.querySelector("#btnCargar");
 
   function renderTabla() {
-    if (!tbody) return;
+    if (!tbody) {return;}
     tbody.innerHTML = "";
     items.forEach((it, i) => {
       const codigo = it?.codigo ?? "";
@@ -141,18 +142,18 @@ export async function VentasPage(container) {
     const elBase = container.querySelector("#tBase");
     const elIGV = container.querySelector("#tIGV");
     const elTot = container.querySelector("#tTot");
-    if (elBase) elBase.textContent = money(base);
-    if (elIGV) elIGV.textContent = money(igv);
-    if (elTot) elTot.textContent = money(total);
+    if (elBase) {elBase.textContent = money(base);}
+    if (elIGV) {elIGV.textContent = money(igv);}
+    if (elTot) {elTot.textContent = money(total);}
   }
 
   renderTabla();
 
   btnCargar.addEventListener("click", async () => {
     const id = selProforma?.value;
-    if (!id) return toastWarning("⚠️ Selecciona una proforma");
+    if (!id) {return toastWarning("⚠️ Selecciona una proforma");}
     const snap = await getDoc(doc(db, "proformas", id));
-    if (!snap.exists()) return toastError("❌ Proforma no encontrada");
+    if (!snap.exists()) {return toastError("❌ Proforma no encontrada");}
     const p = { id: snap.id, ...snap.data() };
     const arr = Array.isArray(p.items) ? p.items : [];
     items = arr.map(it => ({ codigo: it.codigo, nombre: it.nombre, precio: it.precio, cant: it.cant, subtotal: it.cant * it.precio }));
@@ -165,13 +166,13 @@ export async function VentasPage(container) {
   const handleClick = async (e) => {
     if (e.target.classList.contains("btnQuitar")) {
       const i = Number(e.target.dataset.i);
-      if (!isNaN(i)) items.splice(i, 1);
+      if (!isNaN(i)) {items.splice(i, 1);}
       renderTabla();
       return;
     }
 
     if (e.target.id === "btnGuardar") {
-      if (!items.length) return toastWarning("⚠️ Carga una proforma primero");
+      if (!items.length) {return toastWarning("⚠️ Carga una proforma primero");}
       try {
         const { base, igv, total } = calcTotales(items);
 
@@ -192,7 +193,7 @@ export async function VentasPage(container) {
         };
 
         const errors = SCHEMAS.venta.validar(payload);
-        if (errors.length > 0) return toastError("❌ " + errors.join(", "));
+        if (errors.length > 0) {return toastError("❌ " + errors.join(", "));}
 
         // ========================================
         // TRANSACCIÓN COMPLETA CON VALIDACIÓN DE STOCK
@@ -202,7 +203,7 @@ export async function VentasPage(container) {
           const productoIds = new Map(); // Guardar refs para actualizar después
           
           for (const item of itemsSanitized) {
-            if (!item.codigo) continue;
+            if (!item.codigo) {continue;}
             
             const qRef = query(collection(db, "productos"), where("codigo", "==", item.codigo), limit(1));
             const snap = await getDocs(qRef);
@@ -339,13 +340,21 @@ export async function VentasPage(container) {
         ultimoPDF = { doc: docpdf, nombre: `Venta_${result.numero}.pdf` };
         toastSuccess("✅ Venta guardada: " + result.numero);
 
+        // 📢 EMITIR EVENTO PARA SINCRONIZACIÓN DE REPORTES
+        eventBus.emit(EVENTS.VENTA_CREADA, {
+          id: result.id,
+          numero: result.numero,
+          total: result.total,
+          timestamp: new Date()
+        });
+
         items = [];
         selProforma.value = "";
         proformaId = null;
         renderTabla();
 
         const btnPDF = container.querySelector("#btnDescargarPDF");
-        if (btnPDF) btnPDF.classList.remove("hidden");
+        if (btnPDF) {btnPDF.classList.remove("hidden");}
       } catch (err) {
         console.error(err);
         toastError("❌ Error: " + (err?.message || err));
@@ -367,6 +376,6 @@ export async function VentasPage(container) {
   }
 
   // Cleanup: guardar el handler para poder removerlo después
-  if (window._ventasHandler) container.removeEventListener("click", window._ventasHandler);
+  if (window._ventasHandler) {container.removeEventListener("click", window._ventasHandler);}
   window._ventasHandler = handleClick;
 }

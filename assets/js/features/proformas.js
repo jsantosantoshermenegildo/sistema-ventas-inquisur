@@ -10,7 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 async function ensureJsPDF() {
-  if (window.jspdf?.jsPDF) return;
+  if (window.jspdf?.jsPDF) {return;}
   await new Promise((res, rej) => {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
@@ -149,7 +149,7 @@ export async function ProformasPage(container) {
           items[i].precio = nuevoP;
           items[i].subtotal = items[i].cant * items[i].precio;
           const el = document.querySelector(`.precioSubtotal-${i}`);
-          if (el) el.textContent = money(items[i].subtotal);
+          if (el) {el.textContent = money(items[i].subtotal);}
         }
       });
     });
@@ -164,7 +164,7 @@ export async function ProformasPage(container) {
   const handleClick = async (e) => {
     if (e.target.id === "btnAgregar") {
       const opt = selProducto.selectedOptions[0];
-      if (!opt) return toastWarning("⚠️ Selecciona un producto.");
+      if (!opt) {return toastWarning("⚠️ Selecciona un producto.");}
       const precio = toNum(opt.dataset.precio);
       const codigo = opt.dataset.codigo || opt.value;
       const nombre = opt.dataset.nombre || "Producto";
@@ -177,12 +177,12 @@ export async function ProformasPage(container) {
     }
     if (e.target.classList.contains("btnQuitar")) {
       const i = Number(e.target.dataset.i);
-      if (!isNaN(i)) items.splice(i,1);
+      if (!isNaN(i)) {items.splice(i,1);}
       render(); return;
     }
     if (e.target.id === "btnGuardar") {
-      if (!selCliente.value) return toastWarning("⚠️ Selecciona un cliente.");
-      if (!items.length) return toastWarning("⚠️ Agrega productos.");
+      if (!selCliente.value) {return toastWarning("⚠️ Selecciona un cliente.");}
+      if (!items.length) {return toastWarning("⚠️ Agrega productos.");}
       const { base, igv, total } = calc();
       
       // Obtener solo el nombre del cliente (sin email)
@@ -231,7 +231,7 @@ export async function ProformasPage(container) {
       return;
     }
     if (e.target.id === "btnPDF") {
-      if (!items.length) return toastWarning("⚠️ Agrega productos.");
+      if (!items.length) {return toastWarning("⚠️ Agrega productos.");}
       await ensureJsPDF(); const { jsPDF } = window.jspdf;
       const { base, igv, total } = calc();
       const doc = new jsPDF({ unit:"pt", format:"a4" });
@@ -260,8 +260,8 @@ export async function ProformasPage(container) {
       return;
     }
     if (e.target.id === "btnEmail") {
-      if (!items.length) return toastWarning("⚠️ Agrega productos.");
-      if (!selCliente.value) return toastWarning("⚠️ Selecciona un cliente.");
+      if (!items.length) {return toastWarning("⚠️ Agrega productos.");}
+      if (!selCliente.value) {return toastWarning("⚠️ Selecciona un cliente.");}
       
       const clienteObj = clientes.find(c => c.id === selCliente.value);
       
@@ -304,7 +304,7 @@ export async function ProformasPage(container) {
 
   // Agregar listener con cleanup
   container.addEventListener("click", handleClick);
-  if (window._proformasHandler) container.removeEventListener("click", window._proformasHandler);
+  if (window._proformasHandler) {container.removeEventListener("click", window._proformasHandler);}
   window._proformasHandler = handleClick;
 
   render();

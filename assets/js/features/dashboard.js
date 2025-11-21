@@ -7,17 +7,17 @@ import {
 
 const money = n => (Number(n)||0).toLocaleString("es-PE",{style:"currency",currency:"PEN"});
 const toDate = (any) => {
-  if (!any) return null;
-  if (any instanceof Date) return any;
-  if (any instanceof Timestamp) return any.toDate();
-  if (any.seconds) return new Date(any.seconds * 1000);
+  if (!any) {return null;}
+  if (any instanceof Date) {return any;}
+  if (any instanceof Timestamp) {return any.toDate();}
+  if (any.seconds) {return new Date(any.seconds * 1000);}
   const d = new Date(any);
   return isNaN(d) ? null : d;
 };
 
 // Carga perezosa de Chart.js
 async function ensureChart() {
-  if (window.Chart) return;
+  if (window.Chart) {return;}
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js";

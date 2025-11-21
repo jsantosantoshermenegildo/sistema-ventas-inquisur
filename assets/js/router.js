@@ -40,19 +40,19 @@ function renderNavbar() {
   });
 
   const btn = document.getElementById("btnLogout");
-  if (btn) btn.onclick = async () => {
+  if (btn) {btn.onclick = async () => {
     try {
       await logout();
       window.location.href = "login.html";
     } catch {
       // sin ruido
     }
-  };
+  };}
 }
 
 export async function renderRoute() {
   const container = document.getElementById("app");
-  if (!container) return;
+  if (!container) {return;}
 
   // ⚠️ LIMPIEZA CRÍTICA DE CHART.JS - Destruir TODOS los gráficos antes de cambiar página
   console.log('[ROUTER] Iniciando limpieza de gráficos...');
@@ -146,7 +146,7 @@ function CuentaPage(container) {
 
   onAuthStateChanged(auth, (user) => {
     const span = container.querySelector("#cuentaEmail");
-    if (span) span.textContent = user?.email ?? "desconocido";
+    if (span) {span.textContent = user?.email ?? "desconocido";}
   });
 
   container.querySelector("#logoutBtn")?.addEventListener("click", async () => {

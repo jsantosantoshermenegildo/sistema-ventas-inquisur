@@ -145,7 +145,7 @@ export async function ProductosPage(container) {
   if (importInput) {
     importInput.addEventListener("change", async (ev) => {
       const file = ev.target.files?.[0];
-      if (!file) return;
+      if (!file) {return;}
       try {
         const rows = await importFromCSV(file);
         let created = 0;
@@ -194,7 +194,7 @@ export async function ProductosPage(container) {
 function renderTabla(data) {
   const div = document.getElementById("productosList");
 
-  if (!div) return; // Protección si el contenedor no existe
+  if (!div) {return;} // Protección si el contenedor no existe
   if (data.length === 0) {
     div.innerHTML = `<p class="text-slate-500">Sin productos registrados.</p>`;
     return;
@@ -238,7 +238,7 @@ function renderTabla(data) {
 
 // Funciones globales (para botones editar/eliminar)
 window.deleteProducto = async (id) => {
-  if (!confirm("¿Eliminar este producto?")) return;
+  if (!confirm("¿Eliminar este producto?")) {return;}
   try {
     await deleteDoc(doc(db, "productos", id));
     await logAudit({ action: "producto.delete", entity: "productos", entityId: id });

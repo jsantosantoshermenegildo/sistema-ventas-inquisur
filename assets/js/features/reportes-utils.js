@@ -6,8 +6,8 @@
  * Convierte timestamp de Firebase a objeto Date
  */
 export function toDate(timestamp) {
-  if (!timestamp) return null;
-  if (timestamp instanceof Date) return timestamp;
+  if (!timestamp) {return null;}
+  if (timestamp instanceof Date) {return timestamp;}
   if (timestamp.toDate && typeof timestamp.toDate === 'function') {
     return timestamp.toDate();
   }
@@ -18,7 +18,7 @@ export function toDate(timestamp) {
  * Formatea número como moneda
  */
 export function money(value) {
-  if (!value) return 'S/. 0.00';
+  if (!value) {return 'S/. 0.00';}
   return `S/. ${parseFloat(value).toFixed(2)}`;
 }
 
@@ -30,7 +30,7 @@ export function groupByPeriod(data, period) {
 
   data.forEach(item => {
     const date = toDate(item.fechaVenta);
-    if (!date) return;
+    if (!date) {return;}
 
     let key;
     if (period === 'día') {
@@ -148,7 +148,7 @@ export function applyChartTheme(config) {
  */
 export function formatDate(timestamp) {
   const date = toDate(timestamp);
-  if (!date) return 'N/A';
+  if (!date) {return 'N/A';}
   return date.toLocaleDateString('es-PE');
 }
 

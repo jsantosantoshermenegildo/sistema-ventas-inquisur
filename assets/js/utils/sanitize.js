@@ -12,7 +12,7 @@
  * // Retorna: '&lt;img src=x onerror=alert(1)&gt;'
  */
 export function escapeHtml(text) {
-  if (!text) return '';
+  if (!text) {return '';}
   
   // Convertir a string si es number
   const str = String(text).trim();
@@ -32,7 +32,7 @@ export function escapeHtml(text) {
  * sanitizeUrl('https://example.com') // Retorna: 'https://example.com'
  */
 export function sanitizeUrl(url) {
-  if (!url) return '';
+  if (!url) {return '';}
   
   const trimmed = String(url).trim().toLowerCase();
   
@@ -49,13 +49,13 @@ export function sanitizeUrl(url) {
  * @returns {string} Email sanitizado o string vacío si es inválido
  */
 export function sanitizeEmail(email) {
-  if (!email) return '';
+  if (!email) {return '';}
   
   const trimmed = String(email).trim().toLowerCase();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
   // Validar longitud máxima
-  if (trimmed.length > 254) return '';
+  if (trimmed.length > 254) {return '';}
   
   return emailRegex.test(trimmed) ? trimmed : '';
 }
@@ -66,7 +66,7 @@ export function sanitizeEmail(email) {
  * @returns {string} Teléfono sanitizado
  */
 export function sanitizePhone(phone) {
-  if (!phone) return '';
+  if (!phone) {return '';}
   
   // Permitir solo dígitos, +, -, espacio, paréntesis
   return String(phone).replace(/[^\d+\-() ]/g, '').trim();
@@ -80,7 +80,7 @@ export function sanitizePhone(phone) {
  * @returns {string} Texto sanitizado
  */
 export function sanitizeName(text, maxLength = 200) {
-  if (!text) return '';
+  if (!text) {return '';}
   
   const str = String(text).trim();
   
@@ -122,10 +122,10 @@ export function sanitizeNumber(value, min = -Infinity, max = Infinity) {
  * @returns {Array} Array sanitizado
  */
 export function sanitizeArray(items, fields = []) {
-  if (!Array.isArray(items)) return [];
+  if (!Array.isArray(items)) {return [];}
   
   return items.map(item => {
-    if (typeof item !== 'object' || item === null) return {};
+    if (typeof item !== 'object' || item === null) {return {};}
     
     const sanitized = {};
     
@@ -189,7 +189,7 @@ export function sanitizeUserInput(input, options = {}) {
     allowSpaces = true
   } = options;
   
-  if (!input) return '';
+  if (!input) {return '';}
   
   let sanitized = String(input).trim();
   

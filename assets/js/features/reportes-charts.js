@@ -14,7 +14,7 @@ import {
  * Carga dinámicamente Chart.js
  */
 export async function ensureChart() {
-  if (window.Chart) return;
+  if (window.Chart) {return;}
   
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -46,7 +46,7 @@ export function cleanupCharts() {
   if (window.Chart?.instances) {
     const instancias = Array.from(window.Chart.instances || []);
     instancias.forEach(inst => {
-      try { if (inst?.destroy) inst.destroy(); } catch (e) {}
+      try { if (inst?.destroy) {inst.destroy();} } catch (e) {}
     });
   }
 }
@@ -98,7 +98,7 @@ export async function renderChartEstado(ventas) {
     });
 
     const canvas = document.getElementById('chartEstado');
-    if (!canvas) return;
+    if (!canvas) {return;}
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const ctx = canvas.getContext('2d');
@@ -148,10 +148,10 @@ export async function renderChartClientes(ventas) {
     }
 
     const topClientes = getTopClientes(ventas, 5);
-    if (topClientes.length === 0) return;
+    if (topClientes.length === 0) {return;}
 
     const canvas = document.getElementById('chartClientes');
-    if (!canvas) return;
+    if (!canvas) {return;}
 
     const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const ctx = canvas.getContext('2d');

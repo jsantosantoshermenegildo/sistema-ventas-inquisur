@@ -22,7 +22,7 @@ function validCliente({ nombre }) {
 }
 
 function highlight(text, term) {
-  if (!term) return text;
+  if (!term) {return text;}
   const re = new RegExp(`(${term.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")})`, "ig");
   return text.replace(re, `<mark class="bg-yellow-200">$1</mark>`);
 }
@@ -103,21 +103,21 @@ export async function ClientesPage(container) {
       updatedAt: serverTimestamp(),
     };
     
-    if (!validCliente(data)) return toastWarning("⚠️ Verifica: nombre requerido");
+    if (!validCliente(data)) {return toastWarning("⚠️ Verifica: nombre requerido");}
 
     try {
       // Verificar duplicados por DNI/RUC si existe
       if (data.dniRuc) {
         const dupQ = query(colRef, where("dniRuc","==",data.dniRuc), limit(1));
         const dupSnap = await getDocs(dupQ);
-        if (!dupSnap.empty) return toastWarning("⚠️ Ya existe un cliente con ese DNI/RUC.");
+        if (!dupSnap.empty) {return toastWarning("⚠️ Ya existe un cliente con ese DNI/RUC.");}
       }
 
       // Verificar duplicados por email si existe
       if (data.email) {
         const dupQ = query(colRef, where("email","==",data.email), limit(1));
         const dupSnap = await getDocs(dupQ);
-        if (!dupSnap.empty) return toastWarning("⚠️ Ya existe un cliente con ese correo.");
+        if (!dupSnap.empty) {return toastWarning("⚠️ Ya existe un cliente con ese correo.");}
       }
 
       const ref = await addDoc(colRef, data);
@@ -160,7 +160,7 @@ export async function ClientesPage(container) {
 
   // Cleanup al navegar
   window.addEventListener("beforeunload", () => unsubscribe());
-  if (window._clientesUnsubscribe) window._clientesUnsubscribe();
+  if (window._clientesUnsubscribe) {window._clientesUnsubscribe();}
   window._clientesUnsubscribe = unsubscribe;
 
   search.addEventListener("input", renderTabla);
@@ -195,7 +195,7 @@ export async function ClientesPage(container) {
   }
 
   listDiv.addEventListener("click", async (e) => {
-    const tr = e.target.closest("tr[data-id]"); if (!tr) return;
+    const tr = e.target.closest("tr[data-id]"); if (!tr) {return;}
     const id = tr.dataset.id;
     const setEditMode = (on) => {
       tr.querySelectorAll(".view").forEach(el=>el.classList.toggle("hidden",on));
@@ -218,13 +218,13 @@ export async function ClientesPage(container) {
         direccion: String(inputs[3].value||"").trim(),
         updatedAt: serverTimestamp(),
       };
-      if (!validCliente(payload)) return alert("❌ Datos inválidos.");
+      if (!validCliente(payload)) {return alert("❌ Datos inválidos.");}
 
       const originalEmail = tr.querySelectorAll(".view")[1]?.textContent || "";
       if (cleanEmail(originalEmail) !== payload.email) {
         const dupQ = query(colRef, where("email","==",payload.email), limit(1));
         const dupSnap = await getDocs(dupQ);
-        if (!dupSnap.empty) return alert("⚠️ Ya existe otro cliente con ese correo.");
+        if (!dupSnap.empty) {return alert("⚠️ Ya existe otro cliente con ese correo.");}
       }
       try {
         await updateDoc(doc(db,"clientes",id), payload);
@@ -237,7 +237,7 @@ export async function ClientesPage(container) {
     }
 
     if (e.target.classList.contains("btnEliminar")) {
-      if (!confirm("¿Eliminar este cliente?")) return;
+      if (!confirm("¿Eliminar este cliente?")) {return;}
       try {
         await deleteDoc(doc(db,"clientes",id));
         await logAudit({ action:"cliente.delete", entity:"clientes", entityId:id });

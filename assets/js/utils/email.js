@@ -7,7 +7,7 @@ const EMAILJS_PUBLIC_KEY = "L8rF9kP2mQ5xN3vY"; // Reemplazar con tu clave públi
 
 // Carga EmailJS dinámicamente
 async function ensureEmailJS() {
-  if (window.emailjs) return;
+  if (window.emailjs) {return;}
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
     s.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/index.min.js";

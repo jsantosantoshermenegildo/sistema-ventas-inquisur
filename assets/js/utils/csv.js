@@ -12,9 +12,9 @@ export function exportToCSV(data, filename = "export.csv") {
     ...data.map(row =>
       keys.map(key => {
         const val = row[key];
-        if (val === null || val === undefined) return "";
-        if (typeof val === "object") return `"${JSON.stringify(val)}"`;
-        if (typeof val === "string" && val.includes(",")) return `"${val}"`;
+        if (val === null || val === undefined) {return "";}
+        if (typeof val === "object") {return `"${JSON.stringify(val)}"`;}
+        if (typeof val === "string" && val.includes(",")) {return `"${val}"`;}
         return val;
       }).join(",")
     )
@@ -38,7 +38,7 @@ export function importFromCSV(file) {
       try {
         const csv = e.target.result;
         const lines = csv.split("\n").filter(line => line.trim());
-        if (lines.length < 2) throw new Error("CSV vacío o sin encabezado");
+        if (lines.length < 2) {throw new Error("CSV vacío o sin encabezado");}
 
         const headers = lines[0].split(",").map(h => h.trim());
         const data = lines.slice(1).map(line => {

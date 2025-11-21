@@ -117,7 +117,7 @@ export async function AuditoriaPage(container) {
   });
 
   // Cleanup
-  if (window._auditoriaUnsubscribe) window._auditoriaUnsubscribe();
+  if (window._auditoriaUnsubscribe) {window._auditoriaUnsubscribe();}
   window._auditoriaUnsubscribe = unsubscribe;
 
   // Botón para limpiar auditoría

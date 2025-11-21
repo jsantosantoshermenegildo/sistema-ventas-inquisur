@@ -74,7 +74,7 @@ export class LoadingManager {
 
     // Actualizar texto principal
     const textEl = document.getElementById('loading-text');
-    if (textEl) textEl.textContent = text;
+    if (textEl) {textEl.textContent = text;}
 
     // Actualizar subtexto
     const subtextEl = document.getElementById('loading-subtext');
@@ -114,7 +114,7 @@ export class LoadingManager {
    */
   setText(text, subtext = null) {
     const textEl = document.getElementById('loading-text');
-    if (textEl) textEl.textContent = text;
+    if (textEl) {textEl.textContent = text;}
 
     if (subtext !== null) {
       const subtextEl = document.getElementById('loading-subtext');
@@ -157,13 +157,13 @@ export class LoadingManager {
     // Resetear valores
     setTimeout(() => {
       const textEl = document.getElementById('loading-text');
-      if (textEl) textEl.textContent = 'Cargando...';
+      if (textEl) {textEl.textContent = 'Cargando...';}
 
       const subtextEl = document.getElementById('loading-subtext');
-      if (subtextEl) subtextEl.style.display = 'none';
+      if (subtextEl) {subtextEl.style.display = 'none';}
 
       const progressEl = document.getElementById('loading-progress');
-      if (progressEl) progressEl.style.display = 'none';
+      if (progressEl) {progressEl.style.display = 'none';}
     }, 300);
   }
 

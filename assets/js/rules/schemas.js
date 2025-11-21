@@ -7,10 +7,10 @@ export const SCHEMAS = {
   producto: {
     validar: (data) => {
       const errors = [];
-      if (!data.codigo || String(data.codigo).trim().length === 0) errors.push("Código requerido");
-      if (!data.nombre || String(data.nombre).trim().length < 2) errors.push("Nombre inválido (mín. 2 caracteres)");
-      if (data.precio === undefined || Number(data.precio) < 0) errors.push("Precio debe ser ≥ 0");
-      if (data.stock === undefined || Number(data.stock) < 0) errors.push("Stock debe ser ≥ 0");
+      if (!data.codigo || String(data.codigo).trim().length === 0) {errors.push("Código requerido");}
+      if (!data.nombre || String(data.nombre).trim().length < 2) {errors.push("Nombre inválido (mín. 2 caracteres)");}
+      if (data.precio === undefined || Number(data.precio) < 0) {errors.push("Precio debe ser ≥ 0");}
+      if (data.stock === undefined || Number(data.stock) < 0) {errors.push("Stock debe ser ≥ 0");}
       return errors;
     },
     sanitizar: (data) => ({
@@ -29,16 +29,16 @@ export const SCHEMAS = {
     validar: (data) => {
       const errors = [];
       if (!data.nombre || String(data.nombre).trim().length < 2) 
-        errors.push("Nombre inválido (mín. 2 caracteres)");
+        {errors.push("Nombre inválido (mín. 2 caracteres)");}
       
       // Email: opcional pero SI se proporciona, debe ser válido
       if (data.email && !emailRegex.test(String(data.email || "").trim())) 
-        errors.push("Email inválido");
+        {errors.push("Email inválido");}
       
       // Teléfono: opcional pero SI se proporciona, debe ser válido (6-15 dígitos)
       const telLimpio = String(data.telefono || "").replace(/\D/g, "");
       if (data.telefono && telLimpio.length > 0 && !phoneRegex.test(telLimpio)) 
-        errors.push("Teléfono inválido (6-15 dígitos)");
+        {errors.push("Teléfono inválido (6-15 dígitos)");}
       
       return errors;
     },
@@ -56,10 +56,10 @@ export const SCHEMAS = {
   proforma: {
     validar: (data) => {
       const errors = [];
-      if (!data.clienteId) errors.push("Cliente requerido");
-      if (!Array.isArray(data.items) || data.items.length === 0) errors.push("Debe contener al menos un producto");
-      if (Number(data.total || 0) < 0) errors.push("Total debe ser ≥ 0");
-      if (!["borrador", "confirmada", "convertida"].includes(data.estado)) errors.push("Estado inválido");
+      if (!data.clienteId) {errors.push("Cliente requerido");}
+      if (!Array.isArray(data.items) || data.items.length === 0) {errors.push("Debe contener al menos un producto");}
+      if (Number(data.total || 0) < 0) {errors.push("Total debe ser ≥ 0");}
+      if (!["borrador", "confirmada", "convertida"].includes(data.estado)) {errors.push("Estado inválido");}
       return errors;
     },
     sanitizar: (data) => ({
@@ -86,10 +86,10 @@ export const SCHEMAS = {
   venta: {
     validar: (data) => {
       const errors = [];
-      if (!Array.isArray(data.items) || data.items.length === 0) errors.push("Debe contener al menos un producto");
-      if (Number(data.total || 0) < 0) errors.push("Total debe ser ≥ 0");
-      if (!data.numero) errors.push("Número de venta requerido");
-      if (!["confirmada", "pagada", "cancelada"].includes(data.estado)) errors.push("Estado inválido");
+      if (!Array.isArray(data.items) || data.items.length === 0) {errors.push("Debe contener al menos un producto");}
+      if (Number(data.total || 0) < 0) {errors.push("Total debe ser ≥ 0");}
+      if (!data.numero) {errors.push("Número de venta requerido");}
+      if (!["confirmada", "pagada", "cancelada"].includes(data.estado)) {errors.push("Estado inválido");}
       return errors;
     },
     sanitizar: (data) => ({
@@ -116,8 +116,8 @@ export const SCHEMAS = {
   usuario: {
     validar: (data) => {
       const errors = [];
-      if (!data.uid) errors.push("UID requerido");
-      if (!["admin", "seller", "viewer"].includes(data.role)) errors.push("Role inválido");
+      if (!data.uid) {errors.push("UID requerido");}
+      if (!["admin", "seller", "viewer"].includes(data.role)) {errors.push("Role inválido");}
       return errors;
     },
     sanitizar: (data) => ({
@@ -137,7 +137,7 @@ export const SCHEMAS = {
  */
 export function validar(schemaName, data) {
   const schema = SCHEMAS[schemaName];
-  if (!schema) return { valid: false, errors: [`Schema "${schemaName}" no existe`] };
+  if (!schema) {return { valid: false, errors: [`Schema "${schemaName}" no existe`] };}
   const errors = schema.validar(data || {});
   return { valid: errors.length === 0, errors };
 }
@@ -150,7 +150,7 @@ export function validar(schemaName, data) {
  */
 export function validarYSanitizar(schemaName, data) {
   const schema = SCHEMAS[schemaName];
-  if (!schema) return { valid: false, errors: [`Schema "${schemaName}" no existe`] };
+  if (!schema) {return { valid: false, errors: [`Schema "${schemaName}" no existe`] };}
   
   const sanitized = schema.sanitizar(data || {});
   const errors = schema.validar(sanitized);

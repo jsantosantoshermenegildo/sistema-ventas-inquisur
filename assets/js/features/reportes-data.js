@@ -5,6 +5,9 @@
 import { db } from '../firebase.js';
 import { toastError } from '../utils/alerts.js';
 import { loadWithCache } from '../utils/cache.js';
+import { realtimeSync } from '../utils/realtimeSync.js';
+import { autoRefresh } from '../utils/autoRefresh.js';
+import { eventBus, EVENTS } from '../utils/eventBus.js';
 import { 
   collection, 
   getDocs 
@@ -98,7 +101,7 @@ export function filtrarVentas(ventas, filtros = {}) {
       const busqueda = filtros.busqueda.toLowerCase();
       const matchRef = venta.referencia?.toLowerCase().includes(busqueda);
       const matchCliente = venta.clienteNombre?.toLowerCase().includes(busqueda);
-      if (!matchRef && !matchCliente) return false;
+      if (!matchRef && !matchCliente) {return false;}
     }
 
     // Filtro por rango de fechas
@@ -110,8 +113,8 @@ export function filtrarVentas(ventas, filtros = {}) {
       const desde = filtros.fechaDesde ? new Date(filtros.fechaDesde) : null;
       const hasta = filtros.fechaHasta ? new Date(filtros.fechaHasta) : null;
 
-      if (desde && ventaDate < desde) return false;
-      if (hasta && ventaDate > hasta) return false;
+      if (desde && ventaDate < desde) {return false;}
+      if (hasta && ventaDate > hasta) {return false;}
     }
 
     return true;
@@ -161,4 +164,98 @@ export async function cargarTodosDatos() {
     console.error('[DATA] Error cargando datos completos:', error);
     throw error;
   }
+}
+
+/**
+ * ============================================================================
+ * SINCRONIZACIÓN EN TIEMPO REAL
+ * ============================================================================
+ */
+
+/**
+ * Inicia sincronización real-time de ventas
+ * @param {function} onDataUpdate - Callback cuando los datos se actualizan
+ */
+export function iniciarSincronizacionRealtimeVentas(onDataUpdate) {
+  console.log('[DATA-SYNC] 🔄 Iniciando sincronización real-time...');
+
+  realtimeSync.startVentasSync(async (ventasActualizadas) => {
+    try {
+      console.log('[DATA-SYNC] ✅ Ventas sincronizadas:', ventasActualizadas.length);
+
+      // Cargar clientes
+      const clientes = await cargarClientes();
+
+      // Enriquecer ventas
+      const ventasEnriquecidas = enriquecerVentas(ventasActualizadas, clientes);
+      const ventasOrdenadas = ordenarVentas(ventasEnriquecidas);
+
+      // Notificar cambio
+      if (onDataUpdate) {
+        onDataUpdate({
+          ventas: ventasOrdenadas,
+          clientes,
+          timestamp: new Date()
+        });
+      }
+
+      // Emitir evento
+      eventBus.emit(EVENTS.REPORTES_ACTUALIZADO, {
+        cantidad: ventasOrdenadas.length,
+        timestamp: new Date()
+      });
+
+    } catch (error) {
+      console.error('[DATA-SYNC] ❌ Error sincronizando:', error);
+      eventBus.emit(EVENTS.SINCRONIZACION_ERROR, error);
+    }
+  });
+}
+
+/**
+ * Detiene sincronización real-time
+ */
+export function detenerSincronizacionRealtimeVentas() {
+  console.log('[DATA-SYNC] ⏹️ Deteniendo sincronización real-time...');
+  realtimeSync.stopVentasSync();
+}
+
+/**
+ * Inicia refresh automático de reportes
+ * @param {function} onRefresh - Callback cuando se refresca
+ * @param {number} intervalMs - Intervalo en ms (default 30000 = 30s)
+ */
+export function iniciarRefreshAutomatico(onRefresh, intervalMs = 30000) {
+  console.log('[DATA-SYNC] ⏱️ Iniciando refresh automático cada', intervalMs, 'ms...');
+
+  autoRefresh.setInterval(intervalMs);
+  autoRefresh.onRefresh(onRefresh);
+  autoRefresh.start();
+}
+
+/**
+ * Detiene refresh automático
+ */
+export function detenerRefreshAutomatico() {
+  console.log('[DATA-SYNC] ⏹️ Deteniendo refresh automático...');
+  autoRefresh.stop();
+}
+
+/**
+ * Refresh manual inmediato
+ */
+export async function refreshAhora(razon = 'manual') {
+  console.log('[DATA-SYNC] 🔄 Refresh manual:', razon);
+  await autoRefresh.refreshNow(razon);
+}
+
+/**
+ * Obtener estado de sincronización
+ */
+export function obtenerEstadoSincronizacion() {
+  return {
+    realtimeSync: realtimeSync.getStatus(),
+    autoRefresh: autoRefresh.getStatus(),
+    timestamp: new Date()
+  };
 }

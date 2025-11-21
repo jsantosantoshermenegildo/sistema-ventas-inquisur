@@ -2,7 +2,7 @@
 import { toastSuccess, toastError } from './alerts.js';
 
 async function ensureJsPDF() {
-  if (window.jspdf?.jsPDF) return;
+  if (window.jspdf?.jsPDF) {return;}
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
@@ -72,7 +72,7 @@ export async function exportToPDF(config = {}) {
       const tableData = data.map(item =>
         columns.map(col => {
           const value = item[col.key];
-          if (col.format) return col.format(value);
+          if (col.format) {return col.format(value);}
           return String(value || '-');
         })
       );

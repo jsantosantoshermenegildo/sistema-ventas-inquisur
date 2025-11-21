@@ -11,7 +11,7 @@ async function resolveRole(user) {
   try {
     const token = await getIdTokenResult(user, true);
     const claimRole = token?.claims?.role || "";
-    if (claimRole) return claimRole;
+    if (claimRole) {return claimRole;}
   } catch {}
 
   // 2) intenta Firestore /usuarios/{uid}
@@ -19,7 +19,7 @@ async function resolveRole(user) {
     const snap = await getDoc(doc(db, "usuarios", user.uid));
     if (snap.exists()) {
       const fsRole = snap.data()?.role || "";
-      if (fsRole) return fsRole;
+      if (fsRole) {return fsRole;}
     }
   } catch {}
 
@@ -64,9 +64,9 @@ document.addEventListener("click", async (e) => {
 
 window.addEventListener("DOMContentLoaded", () => {
   const user = auth.currentUser;
-  if (user) renderRoute();
+  if (user) {renderRoute();}
 });
 window.addEventListener("hashchange", () => {
   const user = auth.currentUser;
-  if (user) renderRoute();
+  if (user) {renderRoute();}
 });

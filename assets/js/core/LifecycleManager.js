@@ -33,7 +33,7 @@ export class PageLifecycle {
    * Registra un event listener para limpieza automática
    */
   addEventListener(element, event, handler, options) {
-    if (!element || !event || !handler) return;
+    if (!element || !event || !handler) {return;}
     
     element.addEventListener(event, handler, options);
     

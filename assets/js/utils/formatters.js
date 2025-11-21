@@ -41,7 +41,7 @@ export function formatNumber(value, decimals = 2) {
  * @returns {string} Fecha formateada
  */
 export function formatDate(date, format = 'short') {
-  if (!date) return '-';
+  if (!date) {return '-';}
   
   let dateObj;
   
@@ -54,7 +54,7 @@ export function formatDate(date, format = 'short') {
     dateObj = new Date(date);
   }
   
-  if (isNaN(dateObj.getTime())) return '-';
+  if (isNaN(dateObj.getTime())) {return '-';}
   
   const options = FORMAT.DATE_FORMAT[format.toUpperCase()] || FORMAT.DATE_FORMAT.SHORT;
   
@@ -67,7 +67,7 @@ export function formatDate(date, format = 'short') {
  * @returns {number} Número limpio
  */
 export function toNumber(value) {
-  if (typeof value === 'number') return value;
+  if (typeof value === 'number') {return value;}
   
   const cleaned = String(value || '')
     .replace(/[^\d.,-]/g, '')
@@ -112,7 +112,7 @@ export function formatPercentage(value, decimals = 0) {
  */
 export function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) {return '0 Bytes';}
   
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const size = bytes / Math.pow(1024, i);
@@ -128,7 +128,7 @@ export function formatFileSize(bytes) {
  */
 export function truncate(text, maxLength = 50) {
   const str = String(text || '');
-  if (str.length <= maxLength) return str;
+  if (str.length <= maxLength) {return str;}
   return str.slice(0, maxLength - 3) + '...';
 }
 

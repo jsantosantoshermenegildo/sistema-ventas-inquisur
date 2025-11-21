@@ -61,7 +61,7 @@ export const VALIDATION_RULES = {
 export function validateField(value, rules = []) {
   for (const rule of rules) {
     const result = rule(value);
-    if (!result.valid) return result;
+    if (!result.valid) {return result;}
   }
   return { valid: true, error: '' };
 }
@@ -70,7 +70,7 @@ export function validateForm(data, schema = {}) {
   const errors = {};
   
   for (const [field, rules] of Object.entries(schema)) {
-    if (!Array.isArray(rules)) continue;
+    if (!Array.isArray(rules)) {continue;}
     
     const value = data[field];
     const result = validateField(value, rules);
@@ -87,7 +87,7 @@ export function validateForm(data, schema = {}) {
 }
 
 export function sanitizeInput(value) {
-  if (typeof value !== 'string') return value;
+  if (typeof value !== 'string') {return value;}
   
   return value
     .replace(/[<>]/g, '')

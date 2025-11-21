@@ -16,7 +16,7 @@ export class VirtualScroller {
   }
 
   init() {
-    if (!this.container) return;
+    if (!this.container) {return;}
 
     this.viewport = document.createElement('div');
     this.viewport.style.cssText = `

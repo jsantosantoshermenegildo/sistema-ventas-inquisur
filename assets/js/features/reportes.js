@@ -12,7 +12,16 @@ import { debounce } from '../utils/rateLimiter.js';
 import { exportReportToPDF } from '../utils/pdf-export.js';
 import { toDate, money, calcularEstadisticas, formatDate } from './reportes-utils.js';
 import { cleanupCharts, renderAllCharts } from './reportes-charts.js';
-import { cargarTodosDatos, filtrarVentas } from './reportes-data.js';
+import { 
+  cargarTodosDatos, 
+  filtrarVentas,
+  iniciarSincronizacionRealtimeVentas,
+  detenerSincronizacionRealtimeVentas,
+  iniciarRefreshAutomatico,
+  detenerRefreshAutomatico,
+  refreshAhora
+} from './reportes-data.js';
+import { eventBus, EVENTS } from '../utils/eventBus.js';
 
 /**
  * Página de Reportes - Versión Modular
@@ -30,6 +39,8 @@ export async function ReportesPage(container) {
     filteredVentas: [],
     currentPage: 1,
     pageSize: 50,
+    isSyncActive: false,
+    lastSync: null
   };
 
   // ============================================================================
@@ -246,6 +257,9 @@ export async function ReportesPage(container) {
     <div class="space-y-6">
       <!-- Botones de Acciones -->
       <div class="flex gap-2 flex-wrap">
+        <button id="btnRefreshManual" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white rounded-lg flex items-center gap-2 shadow-md transition transform hover:scale-105" title="Actualizar datos">
+          <span>🔄</span> Actualizar Datos
+        </button>
         <button id="btnReportePDF" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg flex items-center gap-2 shadow-md transition transform hover:scale-105">
           <span>📄</span> Descargar PDF
         </button>
@@ -436,13 +450,13 @@ export async function ReportesPage(container) {
     if (row) {
       const ventaId = row.dataset.id;
       const venta = state.allVentas.find(v => v.id === ventaId);
-      if (venta) abrirModalDetalles(venta);
+      if (venta) {abrirModalDetalles(venta);}
     }
   });
 
   document.getElementById('btnCerrarModal')?.addEventListener('click', cerrarModal);
   document.getElementById('modalDetalles')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modalDetalles') cerrarModal();
+    if (e.target.id === 'modalDetalles') {cerrarModal();}
   });
 
   document.getElementById('btnLimpiarCache')?.addEventListener('click', limpiarCache);
@@ -468,8 +482,91 @@ export async function ReportesPage(container) {
 
     // Renderizar con datos iniciales
     await renderConFiltros();
+
+    // ============================================================================
+    // INICIAR SINCRONIZACIÓN EN TIEMPO REAL (SOLUCIÓN 1 + 2)
+    // ============================================================================
+
+    console.log('[REPORTES] 🔄 Iniciando sistemas de sincronización...');
+
+    // 1️⃣ REAL-TIME LISTENER: Escuchar cambios en Firestore
+    iniciarSincronizacionRealtimeVentas(async (datosActualizados) => {
+      console.log('[REPORTES] 🔄 Datos actualizados en tiempo real');
+      state.allVentas = datosActualizados.ventas;
+      state.allClientes = datosActualizados.clientes;
+      state.lastSync = new Date();
+
+      // Actualizar select de clientes
+      if (selectCliente && state.allClientes.length > 0) {
+        selectCliente.innerHTML = '<option value="">Todos los clientes</option>' +
+          state.allClientes.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+      }
+
+      // Re-renderizar con nuevos datos
+      await renderConFiltros();
+
+      // Notificar al usuario (solo si no es la carga inicial)
+      if (state.isSyncActive) {
+        toastSuccess('✅ Datos sincronizados en tiempo real', { duration: 1000 });
+      }
+
+      state.isSyncActive = true;
+    });
+
+    // 2️⃣ REFRESH AUTOMÁTICO: Cada 30 segundos como fallback
+    iniciarRefreshAutomatico(async () => {
+      console.log('[REPORTES] 🔄 Refresh automático ejecutándose...');
+      try {
+        const datosActualizados = await cargarTodosDatos();
+        state.allVentas = datosActualizados.ventas;
+        state.allClientes = datosActualizados.clientes;
+        state.lastSync = new Date();
+        await renderConFiltros();
+      } catch (error) {
+        console.error('[REPORTES] ❌ Error en refresh automático:', error);
+      }
+    }, 30000); // Cada 30 segundos
+
+    // 3️⃣ EVENT BUS: Escuchar eventos de otras partes de la app
+    const unsubscribeVentaCreada = eventBus.on(EVENTS.VENTA_CREADA, async (ventaData) => {
+      console.log('[REPORTES] 📢 Evento: Nueva venta creada', ventaData);
+      await refreshAhora('venta-creada');
+    });
+
+    // 4️⃣ BOTÓN DE REFRESH MANUAL
+    const btnRefreshManual = document.getElementById('btnRefreshManual');
+    if (btnRefreshManual) {
+      btnRefreshManual.addEventListener('click', async () => {
+        (btnRefreshManual).setAttribute('disabled', '');
+        await refreshAhora('manual');
+        (btnRefreshManual).removeAttribute('disabled');
+      });
+    }
+
+    // ============================================================================
+    // CLEANUP: Detener sincronización al salir
+    // ============================================================================
+
+    const originalCleanup = observer.disconnect.bind(observer);
+    container.addEventListener('DOMContentLoaded', () => {
+      return () => {
+        console.log('[REPORTES] 🧹 Limpiando sincronización...');
+        detenerSincronizacionRealtimeVentas();
+        detenerRefreshAutomatico();
+        unsubscribeVentaCreada();
+        cleanupCharts();
+        originalCleanup();
+      };
+    });
+
+    // Cleanup cuando se sale de la página
+    window.addEventListener('beforeunload', () => {
+      console.log('[REPORTES] 👋 Saliendo de reportes, deteniendo sincronización...');
+      detenerSincronizacionRealtimeVentas();
+      detenerRefreshAutomatico();
+    });
     
-    console.log('[REPORTES] ✅ Página lista');
+    console.log('[REPORTES] ✅ Página lista con sincronización activa');
   } catch (error) {
     console.error('[REPORTES] ❌ Error:', error);
     toastError('❌ Error cargando reportes');
