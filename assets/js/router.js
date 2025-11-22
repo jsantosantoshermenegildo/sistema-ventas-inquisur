@@ -161,7 +161,7 @@ function safeRoleSync() {
 }
 
 function CuentaPage(container) {
-  const rol = safeRole() || "sin rol";
+  const rol = safeRoleSync() || "sin rol"; // ✅ Usar versión síncrona
   container.innerHTML = `
     <section class="p-4">
       <h2 class="text-xl font-bold mb-4">Cuenta</h2>
