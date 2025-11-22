@@ -85,7 +85,8 @@ class AutoRefreshManager {
         }
       }
 
-      console.log(`[AUTO-REFRESH] ✅ Refresh completado en ${(Date.now() - this.lastRefreshTime) / 1000}s`);
+      const elapsed = this.lastRefreshTime ? (Date.now() - Number(this.lastRefreshTime)) / 1000 : 0;
+      console.log(`[AUTO-REFRESH] ✅ Refresh completado en ${elapsed}s`);
 
     } catch (error) {
       console.error('[AUTO-REFRESH] ❌ Error durante refresh:', error);

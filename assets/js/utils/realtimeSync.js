@@ -4,8 +4,7 @@
  * Escucha cambios en colecciones y notifica a la aplicación
  */
 
-import { db } from "../firebase.js";
-import { collection, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { db, collection, query, orderBy, limit, onSnapshot } from "../firebase.js";
 import { eventBus, EVENTS } from "./eventBus.js";
 
 class RealtimeSyncManager {
@@ -16,27 +15,27 @@ class RealtimeSyncManager {
   }
 
   /**
-   * Inicia sincronización en tiempo real para ventas
+   * Inicia sincronización en tiempo real para ventas/proformas
    * @param {function} onDataChange - Callback cuando hay cambios
    */
   startVentasSync(onDataChange) {
-    console.log('[SYNC] 🔄 Iniciando sincronización real-time de ventas...');
+    console.log('[SYNC] 🔄 Iniciando sincronización real-time de proformas...');
 
     if (this.unsubscribers.has('ventas')) {
-      console.log('[SYNC] ⚠️ Sync de ventas ya activo, deteniendo anterior');
+      console.log('[SYNC] ⚠️ Sync de proformas ya activo, deteniendo anterior');
       this.stopVentasSync();
     }
 
     try {
       const q = query(
-        collection(db, 'ventas'),
+        collection(db, 'proformas'),
         orderBy('createdAt', 'desc'),
         limit(500) // Limitar a últimas 500
       );
 
       const unsubscribe = onSnapshot(q, 
         (snapshot) => {
-          console.log('[SYNC] ✅ Snapshot de ventas recibido:', snapshot.size, 'docs');
+          console.log('[SYNC] ✅ Snapshot de proformas recibido:', snapshot.size, 'docs');
           
           const ventas = snapshot.docs.map(doc => ({
             id: doc.id,
@@ -48,15 +47,15 @@ class RealtimeSyncManager {
 
           // Emitir evento
           eventBus.emit(EVENTS.DATOS_SINCRONIZADOS, {
-            coleccion: 'ventas',
+            coleccion: 'proformas',
             cantidad: ventas.length,
             timestamp: new Date()
           });
         },
         (error) => {
-          console.error('[SYNC] ❌ Error en onSnapshot de ventas:', error);
+          console.error('[SYNC] ❌ Error en onSnapshot de proformas:', error);
           eventBus.emit(EVENTS.SINCRONIZACION_ERROR, {
-            coleccion: 'ventas',
+            coleccion: 'proformas',
             error: error.message
           });
         }
@@ -64,12 +63,12 @@ class RealtimeSyncManager {
 
       this.unsubscribers.set('ventas', unsubscribe);
       this.isActive = true;
-      console.log('[SYNC] ✅ Sincronización de ventas activada');
+      console.log('[SYNC] ✅ Sincronización de proformas activada');
 
     } catch (error) {
-      console.error('[SYNC] ❌ Error al iniciar sync de ventas:', error);
+      console.error('[SYNC] ❌ Error al iniciar sync de proformas:', error);
       eventBus.emit(EVENTS.SINCRONIZACION_ERROR, {
-        coleccion: 'ventas',
+        coleccion: 'proformas',
         error: error.message
       });
     }

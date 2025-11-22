@@ -1,7 +1,7 @@
 ﻿// firebase.js — Inicialización de Firebase (modular)
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy, limit, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 /**
@@ -44,4 +44,4 @@ const auth = getAuth(app);
 
 console.log("✅ Firebase inicializado correctamente");
 
-export { app, db, auth };
+export { app, db, auth, collection, getDocs, query, orderBy, limit, onSnapshot, doc, updateDoc };

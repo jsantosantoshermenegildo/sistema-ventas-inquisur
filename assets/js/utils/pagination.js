@@ -77,8 +77,9 @@ export function setupPaginationEvents(onPageChange, containerId = "pagination") 
   if (!container) {return;}
 
   container.addEventListener("click", (e) => {
-    if (e.target.classList.contains("pagination-btn") && !e.target.disabled) {
-      const newPage = parseInt(e.target.dataset.page);
+    const target = /** @type {HTMLElement} */ (e.target);
+    if (target.classList.contains("pagination-btn") && !/** @type {HTMLButtonElement} */ (target).disabled) {
+      const newPage = parseInt(target.dataset.page);
       if (!isNaN(newPage)) {
         onPageChange(newPage);
       }
@@ -108,14 +109,14 @@ export function renderPageJumper(currentPage, totalPages) {
  * @param {number} totalPages - total de páginas
  */
 export function setupPageJumper(onJump, totalPages) {
-  const jumper = document.getElementById("pageJumper");
+  const jumper = /** @type {HTMLInputElement} */ (document.getElementById("pageJumper"));
   if (!jumper) {return;}
 
   jumper.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       const page = Math.max(1, Math.min(parseInt(jumper.value) || 1, totalPages));
       onJump(page);
-      jumper.value = page;
+      jumper.value = page.toString();
     }
   });
 }

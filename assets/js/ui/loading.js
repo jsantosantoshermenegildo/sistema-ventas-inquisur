@@ -65,7 +65,7 @@ export class LoadingManager {
    * @param {boolean} options.showProgress - Mostrar barra de progreso
    * @param {number} options.progress - Porcentaje de progreso (0-100)
    */
-  show(text = 'Cargando...', options = {}) {
+  show(text = 'Cargando...', options = { subtext: null, showProgress: false, progress: 0 }) {
     const {
       subtext = null,
       showProgress = false,

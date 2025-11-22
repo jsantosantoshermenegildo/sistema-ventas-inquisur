@@ -4,7 +4,7 @@ import { ProductosPage } from "./features/productos.js";
 import { ClientesPage } from "./features/clientes.js";
 import { ProformasPage } from "./features/proformas.js";
 import { VentasPage } from "./features/ventas.js";
-import { ReportesPage } from "./features/reportes.js";
+import { ReportesPage } from "./features/reportes-simple.js";
 import { AuditoriaPage } from "./features/auditoria.js";
 import { DashboardPage } from "./features/dashboard.js";
 import { Navbar } from "./ui/components.js";
