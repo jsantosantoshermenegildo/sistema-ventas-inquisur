@@ -159,8 +159,6 @@ function safeRoleSync() {
   // Esto evita llamadas asíncronas en funciones síncronas
   return user.reloadUserInfo?.customAttributes?.role || "";
 }
-  return typeof raw === "string" ? raw.replace(/^['"]|['"]$/g, "") : raw;
-}
 
 function CuentaPage(container) {
   const rol = safeRole() || "sin rol";
