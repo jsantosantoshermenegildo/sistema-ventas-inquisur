@@ -9,8 +9,9 @@ import { AuditoriaPage } from "./features/auditoria.js";
 import { DashboardPage } from "./features/dashboard.js";
 import { Navbar } from "./ui/components.js";
 import { PERMISOS, HOME_BY_ROLE } from "./rules/roles.js";
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const ALWAYS_ALLOWED = new Set(["cuenta"]);
 
@@ -26,7 +27,7 @@ const routes = {
 };
 
 // Asegura un contenedor para el navbar y lo pinta
-function renderNavbar() {
+async function renderNavbar() {
   let nav = document.getElementById("main-navbar");
   if (!nav) {
     nav = document.createElement("div");
@@ -34,9 +35,11 @@ function renderNavbar() {
     const appEl = document.getElementById("app");
     document.body.insertBefore(nav, appEl); // navbar antes del <main id="app">
   }
+  
+  const rol = await safeRole(); // ✅ Obtener rol async
   nav.innerHTML = Navbar({
     email: auth.currentUser?.email || "",
-    role: safeRoleSync() || "",
+    role: rol || "",
   });
 
   const btn = document.getElementById("btnLogout");
@@ -95,7 +98,11 @@ export async function renderRoute() {
   `;
 
   const actualHash = location.hash ? location.hash.slice(1) : "";
-  const rol = safeRole();
+  const rol = await safeRole(); // ✅ AWAIT agregado
+  
+  // ✅ Renderizar navbar DESPUÉS de obtener rol
+  await renderNavbar();
+  
   const destino = (actualHash || HOME_BY_ROLE[rol] || "cuenta").toLowerCase();
 
   // Permisos
@@ -137,31 +144,27 @@ async function safeRole() {
     const user = auth.currentUser;
     if (!user) return "";
     
-    // Force refresh cada 5 minutos para obtener claims actualizados
-    const forceRefresh = Date.now() - (window._lastTokenRefresh || 0) > 300000;
-    if (forceRefresh) window._lastTokenRefresh = Date.now();
+    // ✅ SOLUCIÓN RÁPIDA: Obtener rol desde Firestore collection usuarios
+    const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+    if (userDoc.exists()) {
+      return userDoc.data().role || "";
+    }
     
-    const token = await getIdTokenResult(user, forceRefresh);
+    // Fallback: intentar desde token
+    const token = await getIdTokenResult(user, false);
     return token?.claims?.role || "";
   } catch (err) {
-    console.error('❌ Error obteniendo rol del token:', err);
+    console.error('❌ Error obteniendo rol:', err);
     return "";
   }
 }
 
 function safeRoleSync() {
-  // ❌ REMOVIDO: const raw = localStorage.getItem("rol") ?? "";
-  // ⚠️ Versión síncrona temporal (menos segura, usar safeRole() async cuando sea posible)
-  const user = auth.currentUser;
-  if (!user) return "";
-  
-  // Intentar obtener del cache del token actual (no forzar refresh)
-  // Esto evita llamadas asíncronas en funciones síncronas
-  return user.reloadUserInfo?.customAttributes?.role || "";
+  return ""; // Temporal, usar safeRole() async
 }
 
-function CuentaPage(container) {
-  const rol = safeRoleSync() || "sin rol"; // ✅ Usar versión síncrona
+async function CuentaPage(container) {
+  const rol = await safeRole() || "sin rol"; // ✅ Usar versión async
   container.innerHTML = `
     <section class="p-4">
       <h2 class="text-xl font-bold mb-4">Cuenta</h2>

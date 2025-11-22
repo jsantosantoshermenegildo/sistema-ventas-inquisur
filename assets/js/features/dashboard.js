@@ -5,6 +5,9 @@ import {
   collection, getDocs, Timestamp, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+// @ts-ignore - Chart.js cargado dinámicamente
+const Chart = window.Chart;
+
 const money = n => (Number(n)||0).toLocaleString("es-PE",{style:"currency",currency:"PEN"});
 const toDate = (any) => {
   if (!any) {return null;}
@@ -12,11 +15,12 @@ const toDate = (any) => {
   if (any instanceof Timestamp) {return any.toDate();}
   if (any.seconds) {return new Date(any.seconds * 1000);}
   const d = new Date(any);
-  return isNaN(d) ? null : d;
+  return isNaN(/** @type {number} */(d.getTime())) ? null : d;
 };
 
 // Carga perezosa de Chart.js
 async function ensureChart() {
+  // @ts-ignore
   if (window.Chart) {return;}
   await new Promise((resolve, reject) => {
     const s = document.createElement("script");
@@ -34,9 +38,13 @@ export async function DashboardPage(container) {
   const cleanup = () => {
     if (chartIngresos) { try { chartIngresos.destroy(); } catch (e) {} chartIngresos = null; }
     if (chartProductos) { try { chartProductos.destroy(); } catch (e) {} chartProductos = null; }
+    // @ts-ignore - Chart.js global
     if (window.Chart?.instances?.length > 0) {
+      // @ts-ignore
       while (window.Chart.instances.length > 0) {
+        // @ts-ignore
         try { window.Chart.instances[0].destroy(); } catch (e) {}
+        // @ts-ignore
         window.Chart.instances.pop();
       }
     }
@@ -169,6 +177,7 @@ export async function DashboardPage(container) {
     const diasLabels = Object.keys(ingresosPorDia).sort();
     const diasData = diasLabels.map(d => ingresosPorDia[d]);
 
+    // @ts-ignore - Chart.js global
     const chartIngresos = new window.Chart(document.querySelector("#chartIngresos"), {
       type: "line",
       data: {
@@ -201,6 +210,7 @@ export async function DashboardPage(container) {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
 
+    // @ts-ignore - Chart.js global
     const chartProductos = new window.Chart(document.querySelector("#chartProductos"), {
       type: "doughnut",
       data: {

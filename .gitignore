@@ -5,6 +5,7 @@
 # Firebase Service Account (CRÍTICO)
 *-firebase-adminsdk-*.json
 davidnuevo-42c5a-firebase-adminsdk-fbsvc-171a94f6f9.json
+service-account-key.json
 
 # Variables de entorno
 .env
