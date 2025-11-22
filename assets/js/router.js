@@ -10,7 +10,7 @@ import { DashboardPage } from "./features/dashboard.js";
 import { Navbar } from "./ui/components.js";
 import { PERMISOS, HOME_BY_ROLE } from "./rules/roles.js";
 import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
 const ALWAYS_ALLOWED = new Set(["cuenta"]);
 
@@ -36,7 +36,7 @@ function renderNavbar() {
   }
   nav.innerHTML = Navbar({
     email: auth.currentUser?.email || "",
-    role: safeRole() || "",
+    role: safeRoleSync() || "",
   });
 
   const btn = document.getElementById("btnLogout");
@@ -128,8 +128,37 @@ export async function renderRoute() {
 }
 
 /* Helpers */
-function safeRole() {
-  const raw = localStorage.getItem("rol") ?? "";
+/**
+ * ✅ SEGURO: Obtiene el rol del token JWT, NO de localStorage
+ * @returns {Promise<string>} El rol del usuario o string vacío
+ */
+async function safeRole() {
+  try {
+    const user = auth.currentUser;
+    if (!user) return "";
+    
+    // Force refresh cada 5 minutos para obtener claims actualizados
+    const forceRefresh = Date.now() - (window._lastTokenRefresh || 0) > 300000;
+    if (forceRefresh) window._lastTokenRefresh = Date.now();
+    
+    const token = await getIdTokenResult(user, forceRefresh);
+    return token?.claims?.role || "";
+  } catch (err) {
+    console.error('❌ Error obteniendo rol del token:', err);
+    return "";
+  }
+}
+
+function safeRoleSync() {
+  // ❌ REMOVIDO: const raw = localStorage.getItem("rol") ?? "";
+  // ⚠️ Versión síncrona temporal (menos segura, usar safeRole() async cuando sea posible)
+  const user = auth.currentUser;
+  if (!user) return "";
+  
+  // Intentar obtener del cache del token actual (no forzar refresh)
+  // Esto evita llamadas asíncronas en funciones síncronas
+  return user.reloadUserInfo?.customAttributes?.role || "";
+}
   return typeof raw === "string" ? raw.replace(/^['"]|['"]$/g, "") : raw;
 }
 

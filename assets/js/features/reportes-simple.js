@@ -2,11 +2,17 @@
 // REPORTES-SIMPLE.JS - Vista Simple de Proformas/Ventas
 // ============================================================================
 
-import { db, collection, getDocs, doc, updateDoc } from '../firebase.js';
+// Imports de Firebase
+import { db } from '../firebase.js';
+import { collection, getDocs, doc, updateDoc, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js';
+
+// Imports de utilidades
 import { PageTemplate } from '../ui/components.js';
 import { toastError, toastSuccess } from '../utils/alerts.js';
 import { getBadgeEstado } from '../utils/estados.js';
 import { money } from '../utils/formatters.js';
+import { escapeHtml } from '../utils/sanitize.js';
+import { handleError } from '../utils/errorHandler.js';
 
 /**
  * Formatea fecha de Firestore
@@ -68,7 +74,13 @@ export async function ReportesPage(container) {
             actualizadas++;
             console.log(`[MIGRACIÓN] ✅ Actualizada: ${proforma.id}`);
           } catch (error) {
-            console.error(`[MIGRACIÓN] ❌ Error en ${proforma.id}:`, error);
+            // ✅ FIX #7: Error handling consistente
+            await handleError(error, {
+              action: 'proforma.update.estado',
+              entity: 'proformas',
+              entityId: proforma.id,
+              silent: true // No mostrar toast individual
+            });
           }
         }
       }
@@ -140,8 +152,13 @@ export async function ReportesPage(container) {
       
       toastSuccess(`✅ Estado actualizado a: ${nuevoEstado}`);
     } catch (error) {
-      console.error('[REPORTES] Error actualizando estado:', error);
-      toastError('Error actualizando estado: ' + error.message);
+      // ✅ FIX #7: Error handling consistente
+      await handleError(error, {
+        action: 'proforma.update.estado',
+        entity: 'proformas',
+        entityId: proformaId,
+        silent: false
+      });
     }
   }
 
@@ -151,7 +168,13 @@ export async function ReportesPage(container) {
   async function cargarProformas() {
     try {
       console.log('[REPORTES] Cargando proformas...');
-      const snapshot = await getDocs(collection(db, 'proformas'));
+      // ✅ FIX #6: Agregar limit y orderBy para optimizar query
+      const q = query(
+        collection(db, 'proformas'),
+        orderBy('createdAt', 'desc'),
+        limit(500)
+      );
+      const snapshot = await getDocs(q);
       const proformas = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -161,8 +184,13 @@ export async function ReportesPage(container) {
       console.log('[REPORTES] Proformas sin estado:', proformas.filter(p => !p.estado).length);
       return proformas;
     } catch (error) {
-      console.error('[REPORTES] Error:', error);
-      toastError('Error cargando proformas: ' + error.message);
+      // ✅ FIX #7: Error handling consistente
+      await handleError(error, {
+        action: 'proforma.list',
+        entity: 'proformas',
+        entityId: null,
+        silent: false
+      });
       return [];
     }
   }
@@ -204,9 +232,9 @@ export async function ReportesPage(container) {
     const subtotal = total / 1.18; // Total incluye IGV, calcular subtotal
     const igv = total - subtotal;
     
-    document.getElementById('detalleNumero').textContent = proforma.numero || proforma.id.slice(0, 8);
+    document.getElementById('detalleNumero').textContent = escapeHtml(proforma.numero) || escapeHtml(proforma.id.slice(0, 8));
     document.getElementById('detalleFecha').textContent = formatearFecha(proforma.createdAt);
-    document.getElementById('detalleCliente').textContent = proforma.clienteNombre || 'Sin cliente';
+    document.getElementById('detalleCliente').textContent = escapeHtml(proforma.clienteNombre) || 'Sin cliente';
     document.getElementById('detalleEstado').innerHTML = getBadgeEstado(proforma.estado || 'borrador');
     
     // Establecer el valor del select
@@ -220,7 +248,7 @@ export async function ReportesPage(container) {
     tbodyItems.innerHTML = items.map((item, idx) => {
       const cantidad = item.cant || item.cantidad || item.qty || item.unidades || 0;
       const precio = item.precio || item.price || item.precioUnitario || 0;
-      const nombre = item.nombre || item.name || item.descripcion || 'Producto';
+      const nombre = escapeHtml(item.nombre || item.name || item.descripcion || 'Producto');
       const subtotalItem = precio * cantidad;
       
       return `
@@ -276,10 +304,10 @@ export async function ReportesPage(container) {
       <tr class="hover:bg-blue-50 dark:hover:bg-slate-600 transition border-b border-gray-200 dark:border-slate-600 cursor-pointer" 
           data-index="${idx}">
         <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-          ${p.numero || p.id.slice(0, 8)}
+          ${escapeHtml(p.numero) || escapeHtml(p.id.slice(0, 8))}
         </td>
         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-          ${p.clienteNombre || 'Sin cliente'}
+          ${escapeHtml(p.clienteNombre) || 'Sin cliente'}
         </td>
         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
           ${formatearFecha(p.createdAt)}
@@ -657,14 +685,24 @@ export async function ReportesPage(container) {
   const btnMigrar = document.getElementById('btnMigrar');
   const selectEstado = document.getElementById('selectEstado');
 
+  // ✅ FIX #5: Array para almacenar funciones de cleanup
+  const eventListeners = [];
+
+  // Helper para agregar event listener con tracking
+  function addTrackedListener(element, event, handler) {
+    if (!element) return;
+    element.addEventListener(event, handler);
+    eventListeners.push({ element, event, handler });
+  }
+
   // Búsqueda en tiempo real
-  searchInput?.addEventListener('input', (e) => {
+  const handleSearch = (e) => {
     const input = /** @type {HTMLInputElement} */ (e.target);
     const estado = /** @type {HTMLSelectElement} */ (filtroEstado);
     const desde = /** @type {HTMLInputElement} */ (fechaDesde);
     const hasta = /** @type {HTMLInputElement} */ (fechaHasta);
     filtrarProformas(input.value, estado?.value || '', desde?.value || '', hasta?.value || '');
-  });
+  };
 
   // Filtro de estado
   filtroEstado?.addEventListener('change', (e) => {
@@ -751,9 +789,23 @@ export async function ReportesPage(container) {
     
     console.log('[REPORTES] ✅ Vista cargada correctamente');
   } catch (error) {
-    console.error('[REPORTES] ❌ Error en carga inicial:', error);
-    toastError('Error cargando reportes');
+    // ✅ FIX #7: Error handling consistente
+    await handleError(error, {
+      action: 'reportes.init',
+      entity: 'reportes',
+      entityId: null,
+      silent: false
+    });
   }
+
+  // ✅ FIX #5: Retornar función de cleanup para memory leak prevention
+  return () => {
+    console.log('[REPORTES] 🧹 Limpiando event listeners...');
+    eventListeners.forEach(({ element, event, handler }) => {
+      element?.removeEventListener(event, handler);
+    });
+    eventListeners.length = 0; // Vaciar array
+  };
 }
 
 export default ReportesPage;

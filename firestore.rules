@@ -108,6 +108,8 @@ service cloud.firestore {
         request.resource.data.estado in ['borrador', 'enviada', 'confirmada'];
       allow update: if hasAnyRole(['admin', 'seller']) && 
         isValidNumber(request.resource.data.total, 0.01, 999999999) &&
+        // ✅ FIX #3: Validar estado permitido
+        request.resource.data.estado in ['borrador', 'enviada', 'aprobada', 'rechazada', 'facturada'] &&
         // Total y numero son inmutables
         request.resource.data.total == resource.data.total &&
         request.resource.data.numero == resource.data.numero;

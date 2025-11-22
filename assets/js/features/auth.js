@@ -2,6 +2,7 @@
 import { auth } from "../firebase.js";
 import { PageTemplate } from "../ui/components.js";
 import { HOME_BY_ROLE } from "../rules/roles.js";
+import { RateLimiter } from "../utils/rateLimiter.js";
 
 import {
   onAuthStateChanged,
@@ -13,6 +14,9 @@ import {
   getIdTokenResult,
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
+// ✅ FIX #4: Rate limiter (5 intentos por minuto por email)
+const loginLimiter = new RateLimiter(5, 60000);
+
 /** Observa el estado de autenticación y ejecuta callback(user|null) */
 export function observeAuth(cb) {
   return onAuthStateChanged(auth, cb);
@@ -21,7 +25,8 @@ export function observeAuth(cb) {
 /** Cerrar sesión */
 export async function logout() {
   try { await signOut(auth); } catch {}
-  localStorage.removeItem("rol");
+  // ❌ Ya NO usar localStorage para rol
+  // localStorage.removeItem("rol");
   location.hash = "#auth";
 }
 
@@ -47,14 +52,26 @@ export function AuthPage(container) {
     const email = form.email.value.trim();
     const password = form.password.value;
 
+    // ✅ FIX #4: Verificar rate limit
+    const limitCheck = loginLimiter.check(`login:${email}`);
+    if (!limitCheck.allowed) {
+      const segundos = Math.ceil(limitCheck.retryAfter / 1000);
+      alert(`⏱️ Demasiados intentos. Espere ${segundos} segundos antes de reintentar.`);
+      return;
+    }
+
     try {
       await setPersistence(auth, browserLocalPersistence);
       const cred = await signInWithEmailAndPassword(auth, email, password);
 
-      // Sincroniza rol en localStorage (claims)
+      // ✅ Ya NO guardar rol en localStorage (se obtiene del token)
+      // const token = await getIdTokenResult(cred.user, true);
+      // const rol = token?.claims?.role || "";
+      // localStorage.setItem("rol", rol); // ❌ REMOVIDO
+
+      // Obtener rol del token para redirección
       const token = await getIdTokenResult(cred.user, true);
       const rol = token?.claims?.role || "";
-      localStorage.setItem("rol", rol);
 
       // Redirige al home del rol
       const destino = HOME_BY_ROLE[rol] || "cuenta";

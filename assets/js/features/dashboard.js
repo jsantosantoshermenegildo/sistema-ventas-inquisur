@@ -2,7 +2,7 @@
 import { db, auth } from "../firebase.js";
 import { PageTemplate } from "../ui/components.js";
 import {
-  collection, getDocs, Timestamp
+  collection, getDocs, Timestamp, query, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const money = n => (Number(n)||0).toLocaleString("es-PE",{style:"currency",currency:"PEN"});
@@ -128,10 +128,10 @@ export async function DashboardPage(container) {
   try {
     await ensureChart();
 
-    // Cargar datos
+    // Cargar datos con limit para optimizar
     const [snapVentas, snapProformas, snapClientes, snapProductos] = await Promise.all([
-      getDocs(collection(db, "ventas")),
-      getDocs(collection(db, "proformas")),
+      getDocs(query(collection(db, "ventas"), orderBy("createdAt", "desc"), limit(100))),
+      getDocs(query(collection(db, "proformas"), orderBy("createdAt", "desc"), limit(100))),
       getDocs(collection(db, "clientes")),
       getDocs(collection(db, "productos"))
     ]);
